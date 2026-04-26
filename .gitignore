@@ -1,0 +1,27 @@
+# 환경 변수 (API 키, 비밀번호)
+.env
+
+# 데이터 디렉토리 (대용량 위성 영상)
+data/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store

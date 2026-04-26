@@ -1,0 +1,7 @@
+{
+    "_comment": "데이터 경로 설정 - 절대 경로 금지, 상대 경로 또는 환경 변수 사용",
+    "k3a_raw_dir": "data/raw/k3a",
+    "s2_raw_dir": "data/raw/s2",
+    "interim_dir": "data/interim",
+    "output_dir": "data/output"
+}

@@ -1,0 +1,17 @@
+# K3A_S2_MTF 프로젝트 의존성
+
+# 래스터 데이터 처리
+rasterio>=1.3.0
+numpy>=1.24.0
+
+# 환경 변수
+python-dotenv>=1.0.0
+
+# HTTP 요청 (Copernicus API)
+requests>=2.31.0
+
+# 데이터 분석
+scipy>=1.10.0
+
+# 시각화
+matplotlib>=3.7.0

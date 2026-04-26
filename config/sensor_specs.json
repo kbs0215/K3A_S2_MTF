@@ -1,0 +1,22 @@
+{
+    "_comment": "K3A / S2 센서 사양 - 밴드 정보, 해상도, 분광 응답 함수(SRF) 등",
+    "kompsat3a": {
+        "satellite": "KOMPSAT-3A",
+        "bands": {
+            "Blue":  {"center_wavelength_nm": 485, "bandwidth_nm": 70, "gsd_m": 2.2},
+            "Green": {"center_wavelength_nm": 555, "bandwidth_nm": 90, "gsd_m": 2.2},
+            "Red":   {"center_wavelength_nm": 660, "bandwidth_nm": 60, "gsd_m": 2.2},
+            "NIR":   {"center_wavelength_nm": 850, "bandwidth_nm": 100, "gsd_m": 2.2},
+            "PAN":   {"center_wavelength_nm": 625, "bandwidth_nm": 450, "gsd_m": 0.55}
+        }
+    },
+    "sentinel2": {
+        "satellite": "Sentinel-2 (MSI)",
+        "bands": {
+            "B02_Blue":  {"center_wavelength_nm": 490, "bandwidth_nm": 65, "gsd_m": 10},
+            "B03_Green": {"center_wavelength_nm": 560, "bandwidth_nm": 35, "gsd_m": 10},
+            "B04_Red":   {"center_wavelength_nm": 665, "bandwidth_nm": 30, "gsd_m": 10},
+            "B08_NIR":   {"center_wavelength_nm": 842, "bandwidth_nm": 115, "gsd_m": 10}
+        }
+    }
+}

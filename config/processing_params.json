@@ -1,0 +1,21 @@
+{
+    "_comment": "처리 파라미터 설정",
+    "mtf": {
+        "edge_method": "slanted_edge",
+        "oversampling_factor": 4,
+        "nyquist_frequency": 0.5
+    },
+    "resampling": {
+        "method": "bilinear",
+        "target_gsd_m": 2.2
+    },
+    "radiometric": {
+        "reflectance_type": "TOA",
+        "atmospheric_correction": false
+    },
+    "quality_metrics": {
+        "compute_rmse": true,
+        "compute_ssim": true,
+        "compute_psnr": true
+    }
+}
