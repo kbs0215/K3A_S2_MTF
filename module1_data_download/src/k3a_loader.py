@@ -16,7 +16,7 @@ from typing import Any, Optional
 
 import numpy as np
 
-from src.data_access.raster_io import read_geotiff
+from module1_data_download.src.raster_io import read_geotiff
 
 logger = logging.getLogger(__name__)
 

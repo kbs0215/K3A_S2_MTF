@@ -7,7 +7,11 @@
     },
     "resampling": {
         "method": "bilinear",
-        "target_gsd_m": 2.2
+        "target_gsd_m": 2.5
+    },
+    "virtual_grid": {
+        "resolution_m": 2.5,
+        "crs": "EPSG:32652" 
     },
     "radiometric": {
         "reflectance_type": "TOA",

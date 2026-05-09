@@ -1,17 +1,26 @@
 {
-    "_comment": "K3A / S2 센서 사양 - 밴드 정보, 해상도, 분광 응답 함수(SRF) 등",
+    "_comment": "K3A / S2 센서 사양 - 밴드 정보, 해상도, 분광 응답 함수(SRF), Esun 등",
     "kompsat3a": {
         "satellite": "KOMPSAT-3A",
+        "bits_per_pixel": 14,
+        "dn_max": 16383,
         "bands": {
-            "Blue":  {"center_wavelength_nm": 485, "bandwidth_nm": 70, "gsd_m": 2.2},
-            "Green": {"center_wavelength_nm": 555, "bandwidth_nm": 90, "gsd_m": 2.2},
-            "Red":   {"center_wavelength_nm": 660, "bandwidth_nm": 60, "gsd_m": 2.2},
-            "NIR":   {"center_wavelength_nm": 850, "bandwidth_nm": 100, "gsd_m": 2.2},
-            "PAN":   {"center_wavelength_nm": 625, "bandwidth_nm": 450, "gsd_m": 0.55}
+            "Blue":  {"center_wavelength_nm": 485, "bandwidth_nm": 70, "gsd_m": 2.2, "xml_tag": "MS1", "file_suffix": "_B.tif"},
+            "Green": {"center_wavelength_nm": 555, "bandwidth_nm": 90, "gsd_m": 2.2, "xml_tag": "MS2", "file_suffix": "_G.tif"},
+            "Red":   {"center_wavelength_nm": 660, "bandwidth_nm": 60, "gsd_m": 2.2, "xml_tag": "MS3", "file_suffix": "_R.tif"},
+            "NIR":   {"center_wavelength_nm": 850, "bandwidth_nm": 100, "gsd_m": 2.2, "xml_tag": "MS4", "file_suffix": "_N.tif"}
+        },
+        "esun": {
+            "_comment": "태양 복사 조도 (W/m²/μm) - KARI 기술문서 기준 (확인 필요)",
+            "Blue": 1957.0,
+            "Green": 1853.0,
+            "Red": 1505.0,
+            "NIR": 1039.0
         }
     },
     "sentinel2": {
         "satellite": "Sentinel-2 (MSI)",
+        "processing_level": "L1C",
         "bands": {
             "B02_Blue":  {"center_wavelength_nm": 490, "bandwidth_nm": 65, "gsd_m": 10},
             "B03_Green": {"center_wavelength_nm": 560, "bandwidth_nm": 35, "gsd_m": 10},

@@ -1,7 +1,15 @@
 {
     "_comment": "데이터 경로 설정 - 절대 경로 금지, 상대 경로 또는 환경 변수 사용",
     "k3a_raw_dir": "data/raw/k3a",
+    "k3a_extracted_dir": "data/interim/k3a_extracted",
     "s2_raw_dir": "data/raw/s2",
+    "dem_raw_dir": "data/raw/dem",
+    "dem_dir": "data/dem",
     "interim_dir": "data/interim",
-    "output_dir": "data/output"
+    "ortho_dir": "data/interim/ortho",
+    "grid_dir": "data/interim/grid",
+    "output_dir": "data/output",
+    "rad_sim_dir": "data/output/rad_sim",
+    "mtf_sim_dir": "data/output/mtf_sim",
+    "chips_dir": "data/output/chips"
 }
