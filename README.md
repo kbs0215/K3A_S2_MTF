@@ -278,19 +278,6 @@ out = gaussian_filter(V * mask) / gaussian_filter(mask)
 
 ---
 
-## 📦 처리 현황 (2026-05-10 기준)
-
-| 단계 | 결과 |
-|---|---|
-| K3A 원본 (zip) | 3개 (Seoul / Daejeon / Gimjae), 추출 35씬 |
-| S2 SAFE | 12개 |
-| 정합 페어 (성공) | **31** |
-| 방사모사 (성공) | **30** / 31 |
-| MTF 모사 (성공) | **30** / 30 |
-| 칩 페어 추출 | 진행 중 (~5 GB 예상) |
-
----
-
 ## 🙏 출처 및 감사
 
 - **K3A 데이터**: [한국항공우주연구원 (KARI)](https://www.kari.re.kr/) / [아리랑3A호 위성영상](https://www.kompsat.kari.re.kr/)
