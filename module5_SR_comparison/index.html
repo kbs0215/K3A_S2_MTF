@@ -4,563 +4,382 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="KOMPSAT-3A 기반 교차센서 시뮬레이션 학습자료를 활용한">
-  <title>Prithvi-EO-2.0 기반 Sentinel-2 영상 초해상화</title>
+  <meta name="description"
+    content="KOMPSAT-3A 교차센서 시뮬레이션 학습자료를 활용한 Prithvi-EO-2.0 기반 Sentinel-2 초해상화 프레임워크">
+  <title>Sentinel-2 초해상화 · University of Seoul 공간정보공학과 6조</title>
 
-  <!-- Google Fonts & Icons -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Gowun+Batang:wght@400;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
 
   <style>
-    /* ── RESET & DESIGN SYSTEM TOKENS ── */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    /* ─────────────────────────────────────────────
+       RESET & TOKENS
+    ───────────────────────────────────────────── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg-dark: #030307;
-      --bg-deep: #080914;
-      --accent-cyan: #06b6d4;
-      --accent-blue: #3b82f6;
-      --accent-indigo: #6366f1;
-      --accent-purple: #a855f7;
-      --text-main: #f1f5f9;
-      --text-muted: #94a3b8;
-      --text-dark: #475569;
-      --glass-bg: rgba(255, 255, 255, 0.02);
-      --glass-border: rgba(255, 255, 255, 0.07);
-      --glass-glow: rgba(99, 102, 241, 0.08);
-      --font-display: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-      --font-body: 'Plus Jakarta Sans', sans-serif;
-      --transition-base: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      --paper:       #F2EEE4;
+      --paper-2:     #EAE5D8;
+      --ink:         #16120C;
+      --ink-soft:    #5C5346;
+      --ink-faint:   #948A7B;
+      --line:        rgba(22, 18, 12, 0.14);
+      --line-strong: rgba(22, 18, 12, 0.40);
+      --accent:      #B14724;
+      --accent-deep: #8C3416;
+
+      --serif: 'Fraunces', 'Gowun Batang', serif;
+      --sans:  'IBM Plex Sans KR', sans-serif;
+      --mono:  'IBM Plex Mono', 'IBM Plex Sans KR', monospace;
+
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
     }
+
+    html { scroll-behavior: smooth; }
 
     body {
-      background: var(--bg-dark);
-      background-image:
-        radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.12) 0%, transparent 45%),
-        radial-gradient(circle at 50% 50%, rgba(3, 3, 7, 0.6) 0%, #030307 100%);
-      background-attachment: fixed;
-      color: var(--text-main);
-      font-family: var(--font-body);
-      min-height: 100vh;
-      line-height: 1.6;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-weight: 400;
+      line-height: 1.72;
+      letter-spacing: -0.01em;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
       overflow-x: hidden;
-      padding-bottom: 5rem;
-    }
-
-    /* ── UTILITIES & LAYOUT ── */
-    .container {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 0 1.5rem;
-    }
-
-    .glass-card {
-      background: var(--glass-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--glass-border);
-      border-radius: 20px;
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-      padding: 2rem;
       position: relative;
-      overflow: hidden;
-      transition: var(--transition-base);
     }
 
-    .glass-card::before {
+    /* faint paper grain for atmosphere */
+    body::before {
       content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, transparent 100%);
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
       pointer-events: none;
-      z-index: 1;
+      opacity: 0.045;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      mix-blend-mode: multiply;
     }
 
-    .glass-card:hover {
-      border-color: rgba(99, 102, 241, 0.25);
-      box-shadow: 0 12px 40px 0 rgba(99, 102, 241, 0.08);
-      transform: translateY(-2px);
+    ::selection { background: var(--accent); color: var(--paper); }
+
+    /* ─────────────────────────────────────────────
+       LAYOUT
+    ───────────────────────────────────────────── */
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 clamp(1.5rem, 5vw, 4rem);
     }
 
-    .gradient-text {
-      background: linear-gradient(135deg, #00f2fe 0%, #4facfe 30%, #a855f7 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    .measure { max-width: 760px; }
+
+    section { position: relative; }
+
+    .section-pad { padding: clamp(4.5rem, 11vh, 9rem) 0; }
+
+    .rule {
+      height: 1px;
+      background: var(--line);
+      width: 100%;
+    }
+
+    /* section eyebrow / kicker */
+    .kicker {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      margin-bottom: 1.6rem;
+    }
+    .kicker::before {
+      content: '';
+      width: 26px;
+      height: 1px;
+      background: var(--accent);
+      opacity: 0.6;
+    }
+
+    .section-title {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: clamp(1.7rem, 3.6vw, 2.6rem);
+      line-height: 1.12;
+      letter-spacing: -0.018em;
+      margin-bottom: 0.9rem;
+    }
+    .section-intro {
+      font-size: clamp(0.98rem, 1.5vw, 1.08rem);
+      color: var(--ink-soft);
+      max-width: 620px;
+      margin-bottom: clamp(2.8rem, 5vw, 4rem);
+    }
+
+    /* ─────────────────────────────────────────────
+       HERO
+    ───────────────────────────────────────────── */
+    .hero {
+      padding-top: clamp(4.5rem, 13vh, 8.5rem);
+      padding-bottom: clamp(3rem, 7vh, 5rem);
+    }
+
+    .hero-eyebrow {
+      font-family: var(--mono);
+      font-size: 0.74rem;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: clamp(2rem, 5vw, 3.2rem);
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      flex-wrap: wrap;
+    }
+    .hero-eyebrow .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent);
       display: inline-block;
     }
 
-    .gradient-border-btn {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.75rem 1.5rem;
-      border-radius: 30px;
-      background: rgba(8, 9, 20, 0.8);
-      border: 1px solid var(--glass-border);
-      color: var(--text-main);
-      text-decoration: none;
-      font-weight: 500;
-      font-size: 0.9rem;
-      overflow: hidden;
-      transition: var(--transition-base);
-      cursor: pointer;
-      gap: 0.5rem;
+    .hero h1 {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: clamp(2.6rem, 8.2vw, 6rem);
+      line-height: 1.04;
+      letter-spacing: -0.035em;
+      margin-bottom: clamp(1.8rem, 4vw, 2.6rem);
+    }
+    .hero h1 .line { display: block; }
+    .hero h1 em {
+      font-style: italic;
+      color: var(--accent);
+      font-weight: 400;
+    }
+    .hero h1 .small {
+      display: block;
+      font-size: 0.34em;
+      line-height: 1.4;
+      letter-spacing: -0.01em;
+      color: var(--ink-soft);
+      font-weight: 400;
+      margin-top: clamp(1.4rem, 3vw, 2rem);
+      max-width: 30ch;
     }
 
-    .gradient-border-btn::after {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: conic-gradient(from 180deg at 50% 50%, var(--accent-cyan), var(--accent-indigo), var(--accent-purple), var(--accent-cyan));
-      animation: spin 6s linear infinite;
-      z-index: -1;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .gradient-border-btn:hover {
-      border-color: transparent;
-      color: #fff;
-      box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
-    }
-
-    .gradient-border-btn:hover::after {
-      opacity: 1;
-    }
-
-    @keyframes spin {
-      100% {
-        transform: rotate(360deg);
-      }
-    }
-
-    /* ── SCROLL REVEAL ANIMATIONS ── */
-    .reveal {
-      opacity: 0;
-      transform: translateY(30px);
-      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .reveal.active {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    /* ── HERO HEADER SECTION ── */
-    header {
-      padding-top: 5.5rem;
-      padding-bottom: 3.5rem;
-      text-align: center;
-      position: relative;
-    }
-
-    .pulse-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.6rem;
-      background: rgba(99, 102, 241, 0.08);
-      border: 1px solid rgba(99, 102, 241, 0.2);
-      padding: 0.5rem 1rem;
-      border-radius: 30px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--accent-cyan);
-      letter-spacing: 0.08em;
-      margin-bottom: 2rem;
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.04);
-    }
-
-    .pulse-dot {
-      width: 8px;
-      height: 8px;
-      background-color: var(--accent-cyan);
-      border-radius: 50%;
-      position: relative;
-    }
-
-    .pulse-dot::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: var(--accent-cyan);
-      border-radius: 50%;
-      animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-    }
-
-    @keyframes pulse-ring {
-      0% {
-        transform: scale(0.35);
-        opacity: 1;
-      }
-
-      80%,
-      100% {
-        transform: scale(2.2);
-        opacity: 0;
-      }
-    }
-
-    header h1 {
-      font-family: var(--font-display);
-      font-size: clamp(2rem, 4.5vw, 3.2rem);
-      font-weight: 800;
-      line-height: 1.25;
-      letter-spacing: -0.02em;
-      margin-bottom: 1.5rem;
-      color: #fff;
-    }
-
-    header .lead {
-      font-size: clamp(1rem, 2vw, 1.15rem);
-      color: var(--text-muted);
-      max-width: 780px;
-      margin: 0 auto 3rem;
+    .hero-lead {
+      font-size: clamp(1rem, 1.6vw, 1.15rem);
       line-height: 1.75;
+      color: var(--ink-soft);
+      max-width: 600px;
+      margin-bottom: 2.6rem;
     }
 
-    /* ── HERO COVER IMAGE ── */
-    .hero-image-wrap {
-      border-radius: 24px;
-      overflow: hidden;
-      border: 1px solid var(--glass-border);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-      margin-bottom: 4rem;
+    .text-link {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding-bottom: 0.3rem;
+      border-bottom: 1px solid var(--line-strong);
+      transition: gap 0.4s var(--ease), color 0.3s ease, border-color 0.3s ease;
+    }
+    .text-link svg { width: 15px; height: 15px; transition: transform 0.4s var(--ease); }
+    .text-link:hover { color: var(--accent); border-color: var(--accent); gap: 0.9rem; }
+    .text-link:hover svg { transform: translateY(3px); }
+
+    /* HERO IMAGE */
+    .hero-figure {
+      margin-top: clamp(3.5rem, 8vw, 6rem);
       position: relative;
     }
-
-    .hero-image-wrap img {
+    .hero-figure img {
       width: 100%;
       height: auto;
       display: block;
-      transition: transform 8s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1px solid var(--line-strong);
+      filter: grayscale(0.04) contrast(1.02);
     }
-
-    .hero-image-wrap:hover img {
-      transform: scale(1.03);
-    }
-
-    .hero-caption {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: linear-gradient(to top, rgba(3, 3, 7, 0.95) 0%, rgba(3, 3, 7, 0.5) 60%, transparent 100%);
-      padding: 2.5rem 2rem 1.5rem;
-      font-size: 0.85rem;
-      color: var(--text-muted);
+    .figcap {
       display: flex;
       justify-content: space-between;
-      align-items: flex-end;
+      align-items: baseline;
+      gap: 1rem;
       flex-wrap: wrap;
-      gap: 1rem;
-    }
-
-    .hero-caption strong {
-      color: #fff;
-      font-weight: 500;
-    }
-
-    /* ── PIPELINE FLOW DISPLAY ── */
-    .section-title {
-      font-family: var(--font-display);
-      font-size: 1.8rem;
-      font-weight: 700;
-      margin-bottom: 2.5rem;
-      text-align: center;
-      letter-spacing: -0.01em;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.8rem;
-    }
-
-    .section-title::before,
-    .section-title::after {
-      content: '';
-      height: 1px;
-      width: 40px;
-      background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.4), transparent);
-    }
-
-    .pipeline-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
-      margin-bottom: 4rem;
-      position: relative;
-    }
-
-    /* Connecting arrow lines for desktop */
-    @media (min-width: 768px) {
-      .pipeline-grid::after {
-        content: '';
-        position: absolute;
-        top: 30%;
-        left: 8%;
-        width: 84%;
-        height: 2px;
-        background: linear-gradient(90deg, var(--accent-cyan), var(--accent-indigo), var(--accent-purple));
-        z-index: 0;
-        opacity: 0.25;
-      }
-    }
-
-    .pipeline-step {
-      background: rgba(8, 9, 20, 0.6);
-      border: 1px solid var(--glass-border);
-      border-radius: 16px;
-      padding: 1.5rem 1.25rem;
-      text-align: center;
-      z-index: 1;
-      position: relative;
-      transition: var(--transition-base);
-    }
-
-    .pipeline-step:hover {
-      border-color: rgba(99, 102, 241, 0.4);
-      transform: translateY(-4px);
-      box-shadow: 0 10px 24px rgba(99, 102, 241, 0.06);
-    }
-
-    .pipeline-icon {
-      width: 48px;
-      height: 48px;
-      background: rgba(255, 255, 255, 0.03);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 1.25rem;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      color: var(--accent-cyan);
-      font-size: 1.2rem;
-      transition: var(--transition-base);
-    }
-
-    .pipeline-step:hover .pipeline-icon {
-      background: var(--accent-indigo);
-      color: #fff;
-      transform: scale(1.1);
-      box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
-    }
-
-    .pipeline-step h3 {
-      font-size: 0.92rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-      color: #fff;
-    }
-
-    .pipeline-step p {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      line-height: 1.5;
-    }
-
-    @media (max-width: 767px) {
-      .pipeline-grid {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-      }
-
-      .pipeline-step {
-        display: flex;
-        align-items: center;
-        text-align: left;
-        padding: 1.25rem;
-        gap: 1rem;
-      }
-
-      .pipeline-icon {
-        margin: 0;
-        flex-shrink: 0;
-      }
-
-      .pipeline-step-content {
-        flex-grow: 1;
-      }
-    }
-
-    /* ── QUANTITATIVE METRICS DASHBOARD ── */
-    .metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1.25rem;
-      margin-bottom: 4rem;
-    }
-
-    .metric-card {
-      background: rgba(8, 9, 20, 0.45);
-      border: 1px solid var(--glass-border);
-      border-radius: 20px;
-      padding: 1.5rem;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-      transition: var(--transition-base);
-    }
-
-    .metric-card:hover {
-      border-color: rgba(6, 182, 212, 0.3);
-      transform: scale(1.02);
-      box-shadow: 0 12px 30px rgba(6, 182, 212, 0.05);
-    }
-
-    .metric-card::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
-    }
-
-    .metric-value {
-      font-family: var(--font-display);
-      font-size: 2rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      margin-bottom: 0.25rem;
-      color: #fff;
-    }
-
-    .metric-card:nth-child(1) .metric-value {
-      color: var(--accent-cyan);
-    }
-
-    .metric-card:nth-child(2) .metric-value {
-      color: var(--accent-blue);
-    }
-
-    .metric-card:nth-child(3) .metric-value {
-      color: var(--accent-purple);
-    }
-
-    .metric-card:nth-child(4) .metric-value {
-      color: var(--accent-cyan);
-    }
-
-    .metric-label {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text-main);
-      margin-bottom: 0.5rem;
-      letter-spacing: 0.02em;
-    }
-
-    .metric-desc {
+      margin-top: 0.9rem;
+      font-family: var(--mono);
       font-size: 0.72rem;
-      color: var(--text-muted);
-      line-height: 1.4;
+      letter-spacing: 0.04em;
+      color: var(--ink-faint);
+      text-transform: uppercase;
     }
+    .figcap strong { color: var(--ink-soft); font-weight: 500; }
 
-    @media (max-width: 767px) {
-      .metrics-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
+    /* ─────────────────────────────────────────────
+       PIPELINE — editorial numbered steps
+    ───────────────────────────────────────────── */
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--line);
+    }
+    .pstep {
+      padding: 2.2rem 1.6rem 2.4rem 0;
+      border-left: 1px solid var(--line);
+      padding-left: 1.6rem;
+      transition: background 0.4s var(--ease);
+    }
+    .pstep:first-child { border-left: none; padding-left: 0; }
+    .pstep:hover { background: var(--paper-2); }
+    .pstep .num {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      margin-bottom: 1.4rem;
+      display: block;
+    }
+    .pstep h3 {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 1.18rem;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.7rem;
+      line-height: 1.25;
+    }
+    .pstep p { font-size: 0.86rem; color: var(--ink-soft); line-height: 1.6; }
+
+    @media (max-width: 820px) {
+      .pipeline { grid-template-columns: 1fr; border-top: none; }
+      .pstep {
+        border-left: none;
+        border-top: 1px solid var(--line);
+        padding: 1.8rem 0;
       }
+      .pstep:first-child { padding-top: 1.8rem; }
+      .pstep .num { margin-bottom: 0.8rem; }
     }
 
-    /* ── SLIDER UX SECTIONS ── */
-    .slider-section {
-      margin-bottom: 5.5rem;
+    /* ─────────────────────────────────────────────
+       METRICS
+    ───────────────────────────────────────────── */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--line);
+    }
+    .metric {
+      padding: 2.4rem 1.5rem 2.6rem 0;
+      border-left: 1px solid var(--line);
+      padding-left: 1.5rem;
+    }
+    .metric:first-child { border-left: none; padding-left: 0; }
+    .metric .val {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: clamp(2.1rem, 4vw, 3rem);
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-bottom: 0.9rem;
+    }
+    .metric .lab {
+      font-family: var(--mono);
+      font-size: 0.74rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.7rem;
+    }
+    .metric .dsc { font-size: 0.82rem; color: var(--ink-soft); line-height: 1.55; }
+
+    @media (max-width: 700px) {
+      .metrics { grid-template-columns: 1fr 1fr; }
+      .metric { padding: 1.8rem 1rem 1.8rem 1.2rem; }
+      .metric:nth-child(odd) { border-left: none; padding-left: 0; }
+      .metric:nth-child(n+3) { border-top: 1px solid var(--line); }
     }
 
-    .slider-section-meta {
+    /* ─────────────────────────────────────────────
+       SLIDERS — before / after compare
+    ───────────────────────────────────────────── */
+    .slider-section { margin-bottom: clamp(3.5rem, 8vw, 6rem); }
+    .slider-section:last-child { margin-bottom: 0; }
+
+    .slider-meta {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.25rem;
+      align-items: baseline;
       flex-wrap: wrap;
-      gap: 1rem;
+      gap: 0.8rem;
+      margin-bottom: 1.3rem;
+      padding-bottom: 1.3rem;
+      border-bottom: 1px solid var(--line);
     }
-
-    .slider-title-area h2 {
-      font-family: var(--font-display);
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: #fff;
+    .slider-meta h2 {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: clamp(1.25rem, 2.4vw, 1.7rem);
+      letter-spacing: -0.015em;
       display: flex;
-      align-items: center;
-      gap: 0.6rem;
+      align-items: baseline;
+      gap: 0.7rem;
+      flex-wrap: wrap;
     }
-
-    .slider-title-area h2 span {
-      background: rgba(255, 255, 255, 0.08);
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 0.2rem 0.6rem;
-      border-radius: 30px;
-      color: var(--accent-cyan);
+    .slider-meta h2 span {
+      font-family: var(--mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      border: 1px solid var(--line-strong);
+      padding: 0.16rem 0.55rem;
+      border-radius: 2px;
     }
-
     .slider-badge {
+      font-family: var(--mono);
+      font-size: 0.74rem;
+      letter-spacing: 0.04em;
+      color: var(--accent);
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--glass-border);
-      padding: 0.35rem 0.75rem;
-      border-radius: 30px;
-    }
-
-    .slider-container-card {
-      background: rgba(8, 9, 20, 0.4);
-      border: 1px solid var(--glass-border);
-      border-radius: 24px;
-      padding: 1.25rem;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-      transition: var(--transition-base);
-    }
-
-    .slider-container-card:hover {
-      border-color: rgba(99, 102, 241, 0.2);
+      gap: 0.45rem;
+      white-space: nowrap;
     }
 
     .slider-viewport {
       position: relative;
       width: 100%;
       overflow: hidden;
-      border-radius: 16px;
       cursor: col-resize;
       user-select: none;
       -webkit-user-select: none;
-      background: #080914;
-      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+      background: var(--paper-2);
+      border: 1px solid var(--line-strong);
     }
-
-    .slider-viewport>img {
+    .slider-viewport > img {
       display: block;
       width: 100%;
       height: auto;
       pointer-events: none;
       vertical-align: top;
     }
-
-    /* RIGHT panel image (contains proposal / Super-resolved) */
     .slider-overlay-panel {
       position: absolute;
       top: 0;
@@ -569,7 +388,6 @@
       overflow: hidden;
       width: 50%;
     }
-
     .slider-overlay-panel img {
       position: absolute;
       top: 0;
@@ -578,685 +396,547 @@
       width: auto;
       pointer-events: none;
     }
-
-    /* Custom Handles */
     .slider-handle-line {
       position: absolute;
       top: 0;
       height: 100%;
-      width: 2px;
-      background: linear-gradient(to bottom, var(--accent-cyan), var(--accent-indigo) 50%, var(--accent-purple));
+      width: 1px;
+      background: var(--accent);
       transform: translateX(-50%);
       pointer-events: none;
       z-index: 10;
-      box-shadow: 0 0 10px rgba(99, 102, 241, 0.8);
     }
-
     .slider-handle-button {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 48px;
-      height: 48px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
-      background: #fff;
-      border: 3px solid var(--accent-indigo);
+      background: var(--paper);
+      border: 1.5px solid var(--accent);
+      color: var(--accent);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow:
-        0 4px 15px rgba(0, 0, 0, 0.5),
-        0 0 0 4px rgba(99, 102, 241, 0.2);
-      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 2px 10px rgba(22, 18, 12, 0.18);
+      transition: transform 0.25s var(--ease);
     }
+    .slider-viewport:hover .slider-handle-button { transform: translate(-50%, -50%) scale(1.08); }
+    .slider-handle-button svg { width: 17px; height: 17px; }
 
-    .slider-viewport:hover .slider-handle-button {
-      transform: translate(-50%, -50%) scale(1.08);
-      box-shadow:
-        0 6px 20px rgba(0, 0, 0, 0.6),
-        0 0 0 6px rgba(99, 102, 241, 0.35);
-    }
-
-    .slider-handle-button svg {
-      width: 18px;
-      height: 18px;
-      color: var(--bg-deep);
-    }
-
-    /* Before / After labels overlay */
     .slider-labels-wrap {
       position: absolute;
-      bottom: 1.25rem;
-      left: 1.25rem;
-      right: 1.25rem;
-      display: flex;
-      justify-content: space-between;
+      inset: 0;
       pointer-events: none;
-      z-index: 11;
+      z-index: 9;
     }
-
     .slider-lbl {
-      font-size: 0.72rem;
-      font-weight: 600;
+      position: absolute;
+      bottom: 0.85rem;
+      font-family: var(--mono);
+      font-size: 0.66rem;
       letter-spacing: 0.05em;
       text-transform: uppercase;
-      padding: 0.4rem 0.8rem;
-      border-radius: 30px;
-      color: #fff;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      color: var(--paper);
+      background: rgba(22, 18, 12, 0.72);
+      padding: 0.3rem 0.6rem;
+      border-radius: 2px;
+      backdrop-filter: blur(2px);
     }
+    .slider-lbl-left  { left: 0.85rem; }
+    .slider-lbl-right { right: 0.85rem; }
 
-    .slider-lbl-left {
-      background: rgba(15, 23, 42, 0.75);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+    .slider-detail {
+      margin-top: 1.4rem;
+      font-size: 0.92rem;
+      line-height: 1.72;
+      color: var(--ink-soft);
+      max-width: 760px;
     }
+    .slider-detail strong { color: var(--ink); font-weight: 600; }
 
-    .slider-lbl-right {
-      background: rgba(30, 64, 175, 0.75);
-      border: 1px solid rgba(59, 130, 246, 0.3);
-    }
-
-    .slider-detail-card {
-      margin-top: 1.25rem;
-      background: rgba(255, 255, 255, 0.01);
-      border-top: 1px solid var(--glass-border);
-      padding-top: 1.25rem;
-    }
-
-    .slider-detail-card p {
-      font-size: 0.88rem;
-      color: var(--text-muted);
-      line-height: 1.7;
-    }
-
-    .slider-detail-card p strong {
-      color: #fff;
-    }
-
-    /* ── RESEARCH DEPTH TABS ── */
-    .tabs-section {
-      margin-bottom: 5.5rem;
-    }
-
+    /* ─────────────────────────────────────────────
+       TABS — method
+    ───────────────────────────────────────────── */
     .tabs-header {
       display: flex;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--glass-border);
-      border-radius: 14px;
-      padding: 0.3rem;
-      margin-bottom: 1.75rem;
-      overflow-x: auto;
-      gap: 0.2rem;
+      gap: 0;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 2.4rem;
     }
-
     .tab-btn {
-      flex-grow: 1;
-      padding: 0.8rem 1.25rem;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      color: var(--ink-faint);
+      background: none;
       border: none;
-      background: transparent;
-      color: var(--text-muted);
-      font-family: var(--font-body);
-      font-size: 0.88rem;
-      font-weight: 600;
-      border-radius: 10px;
+      border-bottom: 1.5px solid transparent;
+      margin-bottom: -1px;
+      padding: 0.75rem 1.2rem 0.9rem 0;
+      margin-right: 1.8rem;
       cursor: pointer;
-      white-space: nowrap;
-      transition: var(--transition-base);
+      transition: color 0.25s ease, border-color 0.25s ease;
+      text-align: left;
     }
+    .tab-btn:hover { color: var(--ink); }
+    .tab-btn.active { color: var(--ink); border-bottom-color: var(--accent); }
 
-    .tab-btn:hover {
-      color: #fff;
-      background: rgba(255, 255, 255, 0.03);
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; animation: fade 0.5s var(--ease); }
+    @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    .tab-pane h3 {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+      letter-spacing: -0.015em;
+      line-height: 1.2;
+      margin-bottom: 1.1rem;
     }
-
-    .tab-btn.active {
-      background: var(--accent-indigo);
-      color: #fff;
-      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-    }
-
-    .tab-pane {
-      display: none;
-      animation: fadeIn 0.4s ease forwards;
-    }
-
-    .tab-pane.active {
-      display: block;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .tab-content-area h3 {
-      font-size: 1.15rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
-      color: #fff;
-    }
-
-    .tab-content-area p {
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      line-height: 1.75;
-      margin-bottom: 1.25rem;
-    }
-
-    .tab-content-area ul {
-      list-style-type: none;
-      margin-bottom: 1.25rem;
-    }
-
-    .tab-content-area li {
+    .tab-pane > p { color: var(--ink-soft); max-width: 760px; margin-bottom: 1.6rem; }
+    .tab-pane ul { list-style: none; max-width: 820px; }
+    .tab-pane li {
       position: relative;
-      padding-left: 1.5rem;
-      font-size: 0.88rem;
-      color: var(--text-muted);
-      margin-bottom: 0.6rem;
-      line-height: 1.6;
+      padding-left: 1.6rem;
+      margin-bottom: 1.1rem;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      line-height: 1.68;
     }
-
-    .tab-content-area li::before {
-      content: '✓';
+    .tab-pane li::before {
+      content: '—';
       position: absolute;
       left: 0;
-      top: 0;
-      color: var(--accent-cyan);
-      font-weight: bold;
+      color: var(--accent);
+      font-family: var(--mono);
     }
+    .tab-pane li strong { color: var(--ink); font-weight: 600; }
 
-    /* ── FOOTER & CONTACT CARD ── */
-    .contact-card {
-      margin-top: 6rem;
-      text-align: center;
-      background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.06), transparent 50%), rgba(8, 9, 20, 0.5);
-      border: 1px solid var(--glass-border);
-      border-radius: 28px;
-      padding: 3rem 2rem;
-    }
-
-    .contact-card h2 {
-      font-family: var(--font-display);
-      font-size: 1.6rem;
-      font-weight: 700;
-      margin-bottom: 0.75rem;
-      color: #fff;
-    }
-
-    .contact-card p {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      margin-bottom: 2rem;
-    }
-
-    .contact-links {
+    /* ─────────────────────────────────────────────
+       CONTACT
+    ───────────────────────────────────────────── */
+    .contact-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 1.25rem;
-      max-width: 800px;
-      margin: 0 auto;
+      border-top: 1px solid var(--line);
     }
-
     .contact-item {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 16px;
-      padding: 1.25rem;
-      transition: var(--transition-base);
+      padding: 2rem 1.4rem 2rem 0;
+      border-left: 1px solid var(--line);
+      padding-left: 1.4rem;
     }
-
-    .contact-item:hover {
-      border-color: rgba(6, 182, 212, 0.3);
-      background: rgba(6, 182, 212, 0.02);
-      transform: translateY(-3px);
+    .contact-item:first-child { border-left: none; padding-left: 0; }
+    .contact-item .role {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin-bottom: 0.6rem;
     }
-
-    .avatar-icon {
-      width: 44px;
-      height: 44px;
-      background: rgba(255, 255, 255, 0.03);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 0.75rem;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      color: var(--accent-cyan);
-      font-size: 1rem;
-      font-weight: bold;
+    .contact-item .name {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 1.35rem;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.5rem;
     }
-
-    .contact-item:hover .avatar-icon {
-      background: var(--accent-cyan);
-      color: var(--bg-deep);
-      box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
-    }
-
-    .contact-name {
-      font-size: 0.92rem;
-      font-weight: 600;
-      color: #fff;
-      margin-bottom: 0.25rem;
-    }
-
     .contact-email {
+      font-family: var(--mono);
       font-size: 0.8rem;
-      color: var(--accent-blue);
+      color: var(--ink-soft);
       text-decoration: none;
-      display: block;
-      transition: color 0.2s ease;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      border-bottom: 1px solid var(--line);
+      transition: color 0.25s ease, border-color 0.25s ease;
+      word-break: break-all;
     }
+    .contact-email:hover { color: var(--accent); border-color: var(--accent); }
 
-    .contact-email:hover {
-      color: var(--accent-cyan);
-      text-decoration: underline;
-    }
-
-    @media (max-width: 767px) {
-      .contact-links {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-      }
-
+    @media (max-width: 720px) {
+      .contact-grid { grid-template-columns: 1fr; }
       .contact-item {
-        display: flex;
-        align-items: center;
-        text-align: left;
-        padding: 1rem;
-        gap: 1rem;
+        border-left: none;
+        border-top: 1px solid var(--line);
+        padding: 1.6rem 0;
       }
-
-      .avatar-icon {
-        margin: 0;
-        flex-shrink: 0;
-      }
+      .contact-item:first-child { border-top: none; padding-top: 0; }
     }
 
+    /* ─────────────────────────────────────────────
+       FOOTER
+    ───────────────────────────────────────────── */
     footer {
-      text-align: center;
-      margin-top: 4rem;
-      font-size: 0.75rem;
-      color: var(--text-dark);
-      letter-spacing: 0.02em;
+      padding: 3rem 0 4rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+    }
+
+    /* ─────────────────────────────────────────────
+       MOTION
+    ───────────────────────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
+    }
+    .reveal.active { opacity: 1; transform: none; }
+
+    /* hero load stagger */
+    .rise { opacity: 0; transform: translateY(20px); animation: rise 1s var(--ease) forwards; }
+    @keyframes rise { to { opacity: 1; transform: none; } }
+    .d1 { animation-delay: 0.05s; }
+    .d2 { animation-delay: 0.18s; }
+    .d3 { animation-delay: 0.32s; }
+    .d4 { animation-delay: 0.46s; }
+    .d5 { animation-delay: 0.6s; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal, .rise { animation: none !important; opacity: 1 !important; transform: none !important; transition: none; }
+      html { scroll-behavior: auto; }
     }
   </style>
 </head>
 
 <body>
 
-  <div class="container">
-
-    <!-- ── HERO HEADER ── -->
-    <header>
-      <div class="pulse-badge">
-        <div class="pulse-dot"></div>
-        서울시립대학교 공간정보공학과 6조
+  <!-- ── HERO ── -->
+  <header class="hero">
+    <div class="wrap">
+      <div class="hero-eyebrow rise d1">
+        <span class="dot"></span>
+        University of Seoul · 공간정보공학과 6조 — 2026
       </div>
+
       <h1>
-        KOMPSAT-3A 기반 교차센서 시뮬레이션 학습자료를 활용한<br>
-        <span class="gradient-text">Prithvi-EO-2.0 기반 Sentinel-2 초해상화</span>
+        <span class="line rise d2">흐릿한 10m 위성을,</span>
+        <span class="line rise d3"><em>2.5m</em>의 디테일로.</span>
+        <span class="small rise d4">KOMPSAT-3A 교차센서 시뮬레이션 학습자료를 활용한
+          Prithvi-EO-2.0 기반 Sentinel-2 초해상화 프레임워크</span>
       </h1>
-      <p class="lead">
-        KOMPSAT-3A 위성 센서 데이터에서 방사 모사 및 MTF 필터 기반 공간 열화 모사를 통해 학습 데이터 도메인 격차를 해소하고, 대규모 원격탐사 파운데이션 모델을 활용하여 10m급
-        Sentinel-2 대역을 2.5m급 고해상도 정보로 초해상화하는 프레임워크를 제안합니다.
+
+      <p class="hero-lead rise d5">
+        KOMPSAT-3A 센서의 방사 모사와 MTF 기반 공간 열화 모사로 학습 데이터의 도메인 격차를 해소하고,
+        대규모 원격탐사 파운데이션 모델로 10m급 Sentinel-2 대역을 2.5m급 고해상도 정보로 복원합니다.
       </p>
 
-      <div style="display: flex; justify-content: center; gap: 1rem;">
-        <a href="#sliders" class="gradient-border-btn">
-          <svg style="width:16px; height:16px;" fill="none" stroke="currentColor" stroke-width="2.5"
-            viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-          </svg>
-          실제 SR 비교 보기
-        </a>
-      </div>
-    </header>
+      <a href="#sliders" class="text-link rise d5">
+        결과 비교 보기
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m0 0 6-6m-6 6-6-6" />
+        </svg>
+      </a>
 
-    <!-- ── HERO COVER IMAGE ── -->
-    <div class="hero-image-wrap reveal">
-      <img src="./images/hero.jpg" alt="Satellite Super-Resolution Research Region Example">
-      <div class="hero-caption">
-        <span>
-          <strong>연구 대상 영역 종합 대표 시각화</strong> &bull; 서울 도심, 대전 부도심, 김제 농경지/산림 혼합 지역
-        </span>
-        <span>K3A Ground Truth</span>
+      <figure class="hero-figure reveal">
+        <img src="./images/hero.jpg" alt="연구 대상 영역 종합 대표 시각화">
+        <figcaption class="figcap">
+          <span><strong>연구 대상 영역 종합 시각화</strong> — 서울 도심 · 대전 부도심 · 김제 농경지/산림 혼합</span>
+          <span>K3A Ground Truth</span>
+        </figcaption>
+      </figure>
+    </div>
+  </header>
+
+  <!-- ── 01 · WORKFLOW ── -->
+  <section class="section-pad">
+    <div class="wrap reveal">
+      <div class="kicker">01 / Workflow</div>
+      <h2 class="section-title">연구 프레임워크</h2>
+      <p class="section-intro">
+        실제 위성 카메라의 물리적 특성을 순차 모사하여 도메인 격차를 좁히고, 파운데이션 모델로 해상력을 확장합니다.
+      </p>
+
+      <div class="pipeline">
+        <div class="pstep">
+          <span class="num">01</span>
+          <h3>KOMPSAT-3A 획득</h3>
+          <p>공간해상도 2.5m 다중분광 밴드(R·G·B·NIR) 입력 데이터 확보</p>
+        </div>
+        <div class="pstep">
+          <span class="num">02</span>
+          <h3>물리적 센서 모사</h3>
+          <p>분광 특성 매칭 방사 보정과 대기 차이·MTF 필터 기반 공간 해상도 열화</p>
+        </div>
+        <div class="pstep">
+          <span class="num">03</span>
+          <h3>Prithvi-EO-2.0 · LoRA</h3>
+          <p>NASA·IBM 위성 파운데이션 모델에 LoRA를 장착해 지상 도메인 특성에 적응</p>
+        </div>
+        <div class="pstep">
+          <span class="num">04</span>
+          <h3>초해상화 복원</h3>
+          <p>Hybrid Attention Block 디코더와 잔차 학습으로 2.5m급 RGB 복원</p>
+        </div>
       </div>
     </div>
+  </section>
 
-    <!-- ── PIPELINE FLOW CHART ── -->
-    <section class="reveal">
-      <h2 class="section-title">연구 프레임워크 워크플로우</h2>
-      <div class="pipeline-grid">
-        <div class="pipeline-step">
-          <div class="pipeline-icon">K3A</div>
-          <div class="pipeline-step-content">
-            <h3>KOMPSAT-3A 획득</h3>
-            <p>공간해상도 2.5m 다중분광 밴드 (R, G, B, NIR) 입력 데이터 확보</p>
-          </div>
+  <div class="wrap"><div class="rule"></div></div>
+
+  <!-- ── 02 · METRICS ── -->
+  <section class="section-pad">
+    <div class="wrap reveal">
+      <div class="kicker">02 / Metrics</div>
+      <h2 class="section-title">정량적 화질 평가</h2>
+      <p class="section-intro">Bicubic 보간법을 기준선으로 한 정량 지표 개선폭.</p>
+
+      <div class="metrics">
+        <div class="metric">
+          <div class="val">+5.50<small style="font-size:0.4em; font-family:var(--mono); letter-spacing:0; margin-left:0.2em;">dB</small></div>
+          <div class="lab">PSNR 개선</div>
+          <div class="dsc">Bicubic 대비 최대 Peak Signal-to-Noise Ratio 향상율</div>
         </div>
-        <div class="pipeline-step">
-          <div class="pipeline-icon">
-            <svg style="width:20px; height:20px;" fill="none" stroke="currentColor" stroke-width="2"
-              viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m9-9H3" />
-            </svg>
-          </div>
-          <div class="pipeline-step-content">
-            <h3>물리적 센서 모사</h3>
-            <p>분광 특성 매칭을 위한 방사 보정과 대기 차이 및 MTF 필터 기반 공간 해상도 열화</p>
-          </div>
+        <div class="metric">
+          <div class="val">+0.055</div>
+          <div class="lab">SSIM 향상</div>
+          <div class="dsc">구조적 유사성 회복을 통한 윤곽 정합성 극대화</div>
         </div>
-        <div class="pipeline-step">
-          <div class="pipeline-icon">GEO</div>
-          <div class="pipeline-step-content">
-            <h3>Prithvi-EO-2.0 LoRA</h3>
-            <p>NASA·IBM 위성 파운데이션 모델에 LoRA를 장착하여 지상 도메인 특성 최적 적응</p>
-          </div>
+        <div class="metric">
+          <div class="val">−0.028</div>
+          <div class="lab">SAM 감소</div>
+          <div class="dsc">분광 각도 매퍼 오류 최저화로 분광 왜곡 감소</div>
         </div>
-        <div class="pipeline-step">
-          <div class="pipeline-icon">HAB</div>
-          <div class="pipeline-step-content">
-            <h3>초해상화 복원</h3>
-            <p>Hybrid Attention Block 디코더와 잔차 학습 구조를 통해 2.5m급 RGB 복원</p>
-          </div>
+        <div class="metric">
+          <div class="val">−0.035</div>
+          <div class="lab">Edge RMSE</div>
+          <div class="dsc">Sobel 기준 경계부 오차 최소화로 외곽선 선명성 증명</div>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- ── PERFORMANCE METRICS DASHBOARD ── -->
-    <section class="reveal">
-      <h2 class="section-title">정량적 화질 평가 지표</h2>
-      <div class="metrics-grid">
-        <div class="metric-card">
-          <div class="metric-value">+5.50 dB</div>
-          <div class="metric-label">PSNR 개선</div>
-          <div class="metric-desc">Bicubic 보간법 대비 최대 Peak Signal-to-Noise Ratio 향상율</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-value">+0.055</div>
-          <div class="metric-label">SSIM 향상</div>
-          <div class="metric-desc">구조적 유사성(Structural Similarity) 회복을 통한 윤곽 정합성 극대화</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-value">-0.028</div>
-          <div class="metric-label">SAM 감소</div>
-          <div class="metric-desc">분광 각도 매퍼(Spectral Angle Mapper) 오류 최저화로 분광 왜곡 감소</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-value">-0.035</div>
-          <div class="metric-label">Edge RMSE</div>
-          <div class="metric-desc">Sobel 필터 기준 경계부 오차 최소화로 건물/도로 외곽선 선명성 증명</div>
-        </div>
+  <div class="wrap"><div class="rule"></div></div>
+
+  <!-- ── 03 · RESULTS (SLIDERS) ── -->
+  <section id="sliders" class="section-pad">
+    <div class="wrap">
+      <div class="reveal">
+        <div class="kicker">03 / Results</div>
+        <h2 class="section-title">초해상화 결과 대조</h2>
+        <p class="section-intro">핸들을 드래그해 저해상도 입력과 초해상화 출력을 직접 비교해 보세요.</p>
       </div>
-    </section>
-
-    <!-- ── INTERACTIVE BEFORE/AFTER SLIDERS ── -->
-    <section id="sliders" class="reveal">
-      <h2 class="section-title">초해상화(SR) 결과 대조 분석</h2>
 
       <!-- SLIDER 1 -->
-      <div class="slider-section">
-        <div class="slider-section-meta">
-          <div class="slider-title-area">
-            <h2>영상 모사 파이프라인 정합성 검증 <span>시뮬레이션 분석</span></h2>
+      <div class="slider-section reveal">
+        <div class="slider-meta">
+          <h2>영상 모사 파이프라인 정합성 검증 <span>시뮬레이션</span></h2>
+          <div class="slider-badge">RMSE 62% ↓ · MAE 69% ↓</div>
+        </div>
+        <div class="slider-viewport" id="s1">
+          <img src="./images/s1-original.png" alt="Bicubic 4x original simulation">
+          <div class="slider-overlay-panel" id="s1r">
+            <img id="s1ri" src="./images/s1-superx.png" alt="제안 모델 초해상화 결과">
           </div>
-          <div class="slider-badge">
-            <svg style="width:14px; height:14px; color:var(--accent-cyan);" fill="none" stroke="currentColor"
-              stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-            </svg>
-            RMSE 62% 개선 &bull; MAE 69% 개선
+          <div class="slider-handle-line" id="s1h">
+            <div class="slider-handle-button">
+              <svg fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+              </svg>
+            </div>
+          </div>
+          <div class="slider-labels-wrap">
+            <span class="slider-lbl slider-lbl-left">Bicubic 보간</span>
+            <span class="slider-lbl slider-lbl-right">제안 모델 SR</span>
           </div>
         </div>
-        <div class="slider-container-card">
-          <div class="slider-viewport" id="s1">
-            <img src="./images/s1-original.png" alt="Bicubic 4x original simulation">
-            <div class="slider-overlay-panel" id="s1r">
-              <img id="s1ri" src="./images/s1-superx.png" alt="SuperX proposed resolution output">
-            </div>
-            <div class="slider-handle-line" id="s1h">
-              <div class="slider-handle-button">
-                <svg fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
-                </svg>
-              </div>
-            </div>
-            <div class="slider-labels-wrap">
-              <span class="slider-lbl slider-lbl-left">Bicubic 보간 (기존)</span>
-              <span class="slider-lbl slider-lbl-right">제안 모델 초해상화 결과</span>
-            </div>
-          </div>
-          <div class="slider-detail-card">
-            <p>
-              <strong>물리 특성 모사 정밀도 비교:</strong> 위성 분광 전이 단계에서 분광 감도가 현저히 다른 Red 밴드의 Pearson 상관계수가 <strong>0.252에서
-                0.620으로 146% 급증</strong>하는 우수한 도메인 수렴 성능을 나타냈습니다. 단순 기하학적 업샘플링과 달리 Sentinel-2가 지닌 고유의 블러 특성을 반영한 결과입니다.
-            </p>
-          </div>
-        </div>
+        <p class="slider-detail">
+          <strong>물리 특성 모사 정밀도:</strong> 분광 감도가 크게 다른 Red 밴드의 Pearson 상관계수가
+          <strong>0.252 → 0.620 (146%↑)</strong>으로 급증하는 도메인 수렴 성능을 보였습니다. 단순 기하 업샘플링과 달리
+          Sentinel-2 고유의 블러 특성을 반영한 결과입니다.
+        </p>
       </div>
 
       <!-- SLIDER 2 -->
-      <div class="slider-section">
-        <div class="slider-section-meta">
-          <div class="slider-title-area">
-            <h2>도시 인프라 객체 초해상화 <span>도심 지역</span></h2>
+      <div class="slider-section reveal">
+        <div class="slider-meta">
+          <h2>도시 인프라 객체 초해상화 <span>도심</span></h2>
+          <div class="slider-badge">기하 정확도 유의 · p &lt; 0.001</div>
+        </div>
+        <div class="slider-viewport" id="s2">
+          <img src="./images/s2-original.png" alt="Sentinel-2 10m 저해상도 입력">
+          <div class="slider-overlay-panel" id="s2r">
+            <img id="s2ri" src="./images/s2-superx.png" alt="제안 2.5m급 초해상화 출력">
           </div>
-          <div class="slider-badge">
-            지표 기하 정확도 통계 유의 &bull; p &lt; 0.001
+          <div class="slider-handle-line" id="s2h">
+            <div class="slider-handle-button">
+              <svg fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+              </svg>
+            </div>
+          </div>
+          <div class="slider-labels-wrap">
+            <span class="slider-lbl slider-lbl-left">저해상도 입력 (S2 10m)</span>
+            <span class="slider-lbl slider-lbl-right">초해상화 출력 (2.5m급)</span>
           </div>
         </div>
-        <div class="slider-container-card">
-          <div class="slider-viewport" id="s2">
-            <img src="./images/s2-original.png" alt="Sentinel-2 10m Low Resolution input">
-            <div class="slider-overlay-panel" id="s2r">
-              <img id="s2ri" src="./images/s2-superx.png" alt="KOMPSAT-3A 2.5m equivalent proposal output">
-            </div>
-            <div class="slider-handle-line" id="s2h">
-              <div class="slider-handle-button">
-                <svg fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
-                </svg>
-              </div>
-            </div>
-            <div class="slider-labels-wrap">
-              <span class="slider-lbl slider-lbl-left">저해상도 입력 (S2 10m)</span>
-              <span class="slider-lbl slider-lbl-right">초해상화 출력 (제안 2.5m급)</span>
-            </div>
-          </div>
-          <div class="slider-detail-card">
-            <p>
-              <strong>도심 인공지물 식별 분석:</strong> Prithvi-EO-2.0 사전 학습 지식과 Hybrid Attention Block(HAB) 디코더의 통합으로, 기존 저해상도 격자
-              내에서 건물 외곽의 모서리(corner)와 아스팔트 도로망 경계부의 <strong>세부 구조적 정보가 선명하게 복원</strong>되어 고정밀 지도 제작 및 토지 이용 조사에 적합한 기하
-              정보를 구축합니다.
-            </p>
-          </div>
-        </div>
+        <p class="slider-detail">
+          <strong>도심 인공지물 식별:</strong> Prithvi-EO-2.0 사전 학습 지식과 Hybrid Attention Block(HAB) 디코더의 통합으로,
+          저해상도 격자 내에서 건물 모서리와 아스팔트 도로망 경계부의 <strong>세부 구조 정보가 선명하게 복원</strong>되어
+          고정밀 지도 제작과 토지 이용 조사에 적합한 기하 정보를 구축합니다.
+        </p>
       </div>
 
       <!-- SLIDER 3 -->
-      <div class="slider-section">
-        <div class="slider-section-meta">
-          <div class="slider-title-area">
-            <h2>자연 지물 및 토지피복 초해상화 <span>산림 &bull; 농촌 지역</span></h2>
+      <div class="slider-section reveal">
+        <div class="slider-meta">
+          <h2>자연 지물 · 토지피복 초해상화 <span>산림 · 농촌</span></h2>
+          <div class="slider-badge">Cohen's d = 1.231 · 뚜렷한 개선</div>
+        </div>
+        <div class="slider-viewport" id="s3">
+          <img src="./images/s3-original.png" alt="Sentinel-2 10m 저해상도 산림/농촌">
+          <div class="slider-overlay-panel" id="s3r">
+            <img id="s3ri" src="./images/s3-superx.png" alt="제안 고해상도 산림/농촌">
           </div>
-          <div class="slider-badge">
-            Cohen's d = 1.231 &bull; 뚜렷한 화질 개선
+          <div class="slider-handle-line" id="s3h">
+            <div class="slider-handle-button">
+              <svg fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+              </svg>
+            </div>
+          </div>
+          <div class="slider-labels-wrap">
+            <span class="slider-lbl slider-lbl-left">저해상도 입력 (S2 10m)</span>
+            <span class="slider-lbl slider-lbl-right">초해상화 출력 (2.5m급)</span>
           </div>
         </div>
-        <div class="slider-container-card">
-          <div class="slider-viewport" id="s3">
-            <img src="./images/s3-original.png" alt="Sentinel-2 10m low resolution forest rural">
-            <div class="slider-overlay-panel" id="s3r">
-              <img id="s3ri" src="./images/s3-superx.png" alt="Proposal high resolution forest rural">
-            </div>
-            <div class="slider-handle-line" id="s3h">
-              <div class="slider-handle-button">
-                <svg fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
-                </svg>
-              </div>
-            </div>
-            <div class="slider-labels-wrap">
-              <span class="slider-lbl slider-lbl-left">저해상도 입력 (S2 10m)</span>
-              <span class="slider-lbl slider-lbl-right">초해상화 출력 (제안 2.5m급)</span>
-            </div>
-          </div>
-          <div class="slider-detail-card">
-            <p>
-              <strong>자연 지물 수목 분류 분석:</strong> 수밀한 식생 영역 및 농경지 경계선에서의 <strong>분광 정보 왜곡 및 흐려짐 현상을 억제</strong>하고, 경작지의 이랑과
-              고랑 패턴, 수목의 집단 군집 구조를 명확히 구분함으로써 정밀 농업 분석 및 산림 노화도 예측을 위한 핵심 해상력 확장을 완수하였습니다.
-            </p>
-          </div>
-        </div>
+        <p class="slider-detail">
+          <strong>자연 지물 수목 분류:</strong> 수밀한 식생과 농경지 경계선의 <strong>분광 왜곡·흐려짐을 억제</strong>하고,
+          경작지의 이랑·고랑 패턴과 수목 군집 구조를 명확히 구분해 정밀 농업 분석과 산림 노화도 예측을 위한 해상력 확장을 완수했습니다.
+        </p>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- ── RESEARCH DEPTH DETAILS (TABS) ── -->
-    <section class="reveal tabs-section">
-      <h2 class="section-title">프레임워크 핵심 설계 메커니즘</h2>
+  <div class="wrap"><div class="rule"></div></div>
+
+  <!-- ── 04 · METHOD (TABS) ── -->
+  <section class="section-pad">
+    <div class="wrap reveal">
+      <div class="kicker">04 / Method</div>
+      <h2 class="section-title">핵심 설계 메커니즘</h2>
+      <p class="section-intro">물리 기반 데이터 파이프라인부터 손실함수 설계까지, 프레임워크의 세 축.</p>
 
       <div class="tabs-header">
         <button class="tab-btn active" onclick="openTab(event, 'tab-dataset')">물리적 데이터 파이프라인</button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-model')">LoRA 및 HAB 구조</button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-loss')">Edge-Spectral 손실 설계</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-model')">LoRA · HAB 구조</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-loss')">Edge-Spectral 손실</button>
       </div>
 
-      <!-- Tab 1: Dataset Pipeline -->
-      <div id="tab-dataset" class="tab-pane active glass-card tab-content-area">
-        <h3>1. 물리적 센서 특성을 결합한 시뮬레이션 환경 구축</h3>
+      <div id="tab-dataset" class="tab-pane active">
+        <h3>물리적 센서 특성을 결합한 시뮬레이션 환경</h3>
         <p>
-          기존의 딥러닝 기반 위성 이미지 초해상화 연구는 고해상도 영상을 단순히 가우시안 필터나 바이큐빅 방식으로 다운샘플링하여 학습 데이터를 구축하는 중대한 도메인 격차(domain gap) 한계가
-          있었습니다. 본 연구에서는 실제 위성 카메라의 비물리적/물리적 요소를 순차 모사했습니다.
+          기존 위성 초해상화 연구는 고해상도 영상을 단순 가우시안/바이큐빅으로 다운샘플링해 학습 데이터를 만드는 중대한 도메인 격차 한계가
+          있었습니다. 본 연구는 실제 위성 카메라의 물리적 요소를 순차 모사했습니다.
         </p>
         <ul>
-          <li><strong>분광 센서 정합 (Radiometric Matching):</strong> 두 센서 간의 분광응답함수(SRF)의 불일치를 보정하기 위해 다변량 통계적 선형 매칭 기술인
-            IR-MAD(Iteratively Reweighted Multivariate Alteration Detection) 기법 기반의 가중 선형 회귀 모형을 구축하여 분광 불일치 왜곡을 정밀
-            해소했습니다.</li>
-          <li><strong>공간적 기하 열화 (MTF Blur Simulation):</strong> Sentinel-2 위성이 지구 궤도에서 갖는 점확산함수(PSF)의 차이를 KOMPSAT-3A 렌즈
-            규격에 맞춰 모사하고자, 대기 감쇠와 수차 성능 인자를 합성한 MTF 필터를 설계 및 푸리에 주파수 영역에서 필터링함으로써 센서 본연의 흐림 효과를 정밀 유도했습니다.</li>
+          <li><strong>분광 센서 정합 (Radiometric Matching):</strong> 두 센서 간 분광응답함수(SRF) 불일치를 보정하기 위해
+            IR-MAD(Iteratively Reweighted Multivariate Alteration Detection) 기반 가중 선형 회귀 모형으로 분광 왜곡을 정밀 해소.</li>
+          <li><strong>공간적 기하 열화 (MTF Blur Simulation):</strong> Sentinel-2의 점확산함수(PSF) 차이를 KOMPSAT-3A 규격에 맞춰
+            모사하고자, 대기 감쇠·수차 인자를 합성한 MTF 필터를 푸리에 주파수 영역에서 필터링해 센서 본연의 흐림을 유도.</li>
         </ul>
       </div>
 
-      <!-- Tab 2: Model Architecture -->
-      <div id="tab-model" class="tab-pane glass-card tab-content-area">
-        <h3>2. Geo 파운데이션 모델 Prithvi-EO-2.0과 LoRA &bull; HAB 디코더의 융합</h3>
+      <div id="tab-model" class="tab-pane">
+        <h3>Prithvi-EO-2.0과 LoRA · HAB 디코더의 융합</h3>
         <p>
-          Sentinel-2 위성 영상은 고유의 대기 및 지상 피복 분포의 글로벌 컨텍스트를 지니고 있습니다. 일반 컴퓨터 비전 사전학습 모델의 부적합성을 돌파하고자 NASA와 IBM이 공동 제작한
-          Prithvi-EO-2.0(300M parameter ViT) 인코더를 결합했습니다.
+          Sentinel-2는 고유의 대기·지상 피복 분포의 글로벌 컨텍스트를 지닙니다. 일반 비전 사전학습 모델의 부적합성을 돌파하고자
+          NASA·IBM이 공동 제작한 Prithvi-EO-2.0(300M ViT) 인코더를 결합했습니다.
         </p>
         <ul>
-          <li><strong>LoRA (Low-Rank Adaptation):</strong> 대규모 사전학습 모델의 파운데이션 지식을 왜곡하지 않고 위성 칩 단위 초해상화에 미세
-            조율(fine-tuning)하기 위해, 인코더 Attention 행렬 측면에 저차원 업데이트(Rank r=8) 레이어를 임베딩하여 연산 자원 절감과 오버피팅을 방지했습니다.</li>
-          <li><strong>HAB (Hybrid Attention Block) 디코더:</strong> 공간 복원이 복잡한 고주파 엣지 대역의 재구성을 위해 공간적 어텐션과 채널 어텐션을 직렬 결합한
-            하이브리드 블록 구조를 디코더에 결합하여, 유실되기 쉬운 건물의 직각 코너 및 아스팔트 에지를 날카롭게 재현했습니다.</li>
+          <li><strong>LoRA (Low-Rank Adaptation):</strong> 파운데이션 지식을 왜곡하지 않고 위성 칩 단위 초해상화에 미세 조율하기 위해,
+            인코더 Attention 행렬에 저차원 업데이트(Rank r=8) 레이어를 임베딩해 연산 절감과 오버피팅을 방지.</li>
+          <li><strong>HAB (Hybrid Attention Block) 디코더:</strong> 고주파 엣지 대역 재구성을 위해 공간 어텐션과 채널 어텐션을 직렬
+            결합한 하이브리드 블록으로, 유실되기 쉬운 건물 직각 코너와 아스팔트 에지를 날카롭게 재현.</li>
         </ul>
       </div>
 
-      <!-- Tab 3: Loss Design -->
-      <div id="tab-loss" class="tab-pane glass-card tab-content-area">
-        <h3>3. Edge-Spectral 다중 가중 손실함수 설계</h3>
+      <div id="tab-loss" class="tab-pane">
+        <h3>Edge-Spectral 다중 가중 손실함수</h3>
         <p>
-          일반 L1 혹은 L2(MSE) 단일 손실 함수만을 채택할 경우 경계면이 뭉개지거나 블러화(Blurring)되는 문제 및 스펙트럼 정보의 극심한 색상 이상 왜곡이 발생하는 원격탐사 고유의 문제를
-          공략했습니다.
+          단일 L1/L2(MSE) 손실은 경계면이 뭉개지거나 스펙트럼 색상 왜곡이 발생하는 원격탐사 고유의 문제를 일으킵니다. 이를 다중 가중 손실로 공략했습니다.
         </p>
         <ul>
-          <li><strong>L1 화소 복원 손실 (weight = 1.0):</strong> 영상 전반의 전체적인 반사도(Reflectance) 밝기값 균형을 지탱하는 기본 픽셀 단위 손실.</li>
-          <li><strong>Edge-Aware Sobel 손실 (weight = 0.3):</strong> 수평/수직 Sobel 그레디언트를 통과시켜 추출된 윤곽 성분에 특화된 거리를 평가하여 지형지물의
-            형상을 선명히 가꿔주는 기하 손실.</li>
-          <li><strong>SAM (Spectral Angle Mapper) 손실 (weight = 0.15):</strong> 고해상도 복원 단계에서 다중 분광 벡터의 코사인 내각 차이를 최소화하여
-            분광학적 시그니처 색상을 왜곡 없이 원본에 수렴시키는 핵심 분광 손실.</li>
+          <li><strong>L1 화소 복원 손실 (w = 1.0):</strong> 영상 전반의 반사도 밝기값 균형을 지탱하는 기본 픽셀 손실.</li>
+          <li><strong>Edge-Aware Sobel 손실 (w = 0.3):</strong> 수평/수직 Sobel 그레디언트로 추출한 윤곽 성분에 특화된 기하 손실로
+            지형지물 형상을 선명화.</li>
+          <li><strong>SAM (Spectral Angle Mapper) 손실 (w = 0.15):</strong> 복원 단계에서 다중 분광 벡터의 코사인 내각 차이를 최소화해
+            분광학적 시그니처 색상을 원본에 수렴.</li>
         </ul>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- ── FOOTER & CONTACT CARD ── -->
-    <section class="reveal">
-      <div class="contact-card">
-        <h2>연구 및 학술 협업 문의</h2>
-        <p>본 프레임워크 연구 및 데이터셋 공유, 관련 공간정보 융합 연구에 관심이 있으신 연구자분들의 협력을 환영합니다.</p>
+  <div class="wrap"><div class="rule"></div></div>
 
-        <div class="contact-links">
-          <div class="contact-item">
-            <div class="avatar-icon">DE</div>
-            <div class="contact-name">이동언 연구원</div>
-            <a href="mailto:lde0267@uos.ac.kr" class="contact-email">lde0267@uos.ac.kr</a>
-          </div>
-          <div class="contact-item">
-            <div class="avatar-icon">BS</div>
-            <div class="contact-name">김범식 연구원</div>
-            <a href="mailto:kbs0215@uos.ac.kr" class="contact-email">kbs0215@uos.ac.kr</a>
-          </div>
-          <div class="contact-item">
-            <div class="avatar-icon">DH</div>
-            <div class="contact-name">이두현 연구원</div>
-            <a href="mailto:0216top@uos.ac.kr" class="contact-email">0216top@uos.ac.kr</a>
-          </div>
+  <!-- ── 05 · CONTACT ── -->
+  <section class="section-pad">
+    <div class="wrap reveal">
+      <div class="kicker">05 / Contact</div>
+      <h2 class="section-title">연구 및 학술 협업 문의</h2>
+      <p class="section-intro">
+        프레임워크 연구·데이터셋 공유, 공간정보 융합 연구에 관심 있는 연구자분들의 협력을 환영합니다.
+      </p>
+
+      <div class="contact-grid">
+        <div class="contact-item">
+          <div class="role">Researcher</div>
+          <div class="name">이동언</div>
+          <a href="mailto:lde0267@uos.ac.kr" class="contact-email">lde0267@uos.ac.kr</a>
+        </div>
+        <div class="contact-item">
+          <div class="role">Researcher</div>
+          <div class="name">김범식</div>
+          <a href="mailto:kbs0215@uos.ac.kr" class="contact-email">kbs0215@uos.ac.kr</a>
+        </div>
+        <div class="contact-item">
+          <div class="role">Researcher</div>
+          <div class="name">이두현</div>
+          <a href="mailto:0216top@uos.ac.kr" class="contact-email">0216top@uos.ac.kr</a>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <footer>
-      <p>&copy; 2026 Seoul National University of Science and Technology - Remote Sensing Lab. All rights reserved.</p>
-    </footer>
+  <footer>
+    <div class="wrap">
+      © 2026 University of Seoul · Spatial Information Engineering — Remote Sensing · Team 06
+    </div>
+  </footer>
 
-  </div>
-
-  <!-- ── INTERACTIVE SCRIPTS ── -->
+  <!-- ── SCRIPTS ── -->
   <script>
-    // ── REVEAL ON SCROLL INTERSECTION OBSERVER ──
+    // ── REVEAL ON SCROLL ──
     document.addEventListener('DOMContentLoaded', () => {
       const reveals = document.querySelectorAll('.reveal');
-      const revealObserver = new IntersectionObserver((entries) => {
+      const obs = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
             entry.target.classList.add('active');
-            revealObserver.unobserve(entry.target); // Trigger only once
+            obs.unobserve(entry.target);
           }
         });
-      }, {
-        threshold: 0.1,
-        rootMargin: "0px 0px -50px 0px"
-      });
-
-      reveals.forEach(el => revealObserver.observe(el));
+      }, { threshold: 0.08, rootMargin: "0px 0px -40px 0px" });
+      reveals.forEach(el => obs.observe(el));
     });
 
-    // ── TAB SELECTION LOGIC ──
+    // ── TABS ──
     function openTab(evt, tabId) {
-      // Hide all tab content
-      const tabPanes = document.querySelectorAll('.tab-pane');
-      tabPanes.forEach(pane => pane.classList.remove('active'));
-
-      // Remove active state from all buttons
-      const tabBtns = document.querySelectorAll('.tab-btn');
-      tabBtns.forEach(btn => btn.classList.remove('active'));
-
-      // Show selected content and activate tab button
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
       evt.currentTarget.classList.add('active');
     }
 
-    // ── COMPARISON SLIDER DRAGGING CORE LOGIC ──
+    // ── COMPARE SLIDER ──
     function initSlider(wrapId, rightId, handleId, rightImgId) {
       const wrap = document.getElementById(wrapId);
       const right = document.getElementById(rightId);
@@ -1269,54 +949,28 @@
         const pct = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
         const wPx = wrap.offsetWidth;
         const rightPx = wPx - (pct / 100) * wPx;
-
         right.style.width = rightPx + 'px';
         rightImg.style.width = wPx + 'px';
         handle.style.left = pct + '%';
       }
+      function getX(e) { return e.touches ? e.touches[0].clientX : e.clientX; }
 
-      function getX(e) {
-        return e.touches ? e.touches[0].clientX : e.clientX;
-      }
-
-      // Interactive Hover Tracking
-      wrap.addEventListener('mousemove', e => {
-        if (!dragging) update(getX(e));
-      });
-      wrap.addEventListener('mousedown', e => {
-        dragging = true;
-        update(getX(e));
-      });
-
+      wrap.addEventListener('mousemove', e => { if (!dragging) update(getX(e)); });
+      wrap.addEventListener('mousedown', e => { dragging = true; update(getX(e)); });
       window.addEventListener('mouseup', () => { dragging = false; });
-      window.addEventListener('mousemove', e => {
-        if (dragging) update(getX(e));
-      });
+      window.addEventListener('mousemove', e => { if (dragging) update(getX(e)); });
 
-      // Touch Event Support
-      wrap.addEventListener('touchstart', e => {
-        dragging = true;
-        update(getX(e));
-      }, { passive: true });
-      wrap.addEventListener('touchmove', e => {
-        update(getX(e));
-        if (e.cancelable) e.preventDefault();
-      }, { passive: false });
+      wrap.addEventListener('touchstart', e => { dragging = true; update(getX(e)); }, { passive: true });
+      wrap.addEventListener('touchmove', e => { update(getX(e)); if (e.cancelable) e.preventDefault(); }, { passive: false });
       window.addEventListener('touchend', () => { dragging = false; });
 
-      // Handle Resize / Initial Alignment
       function setDefault() {
         const rect = wrap.getBoundingClientRect();
         update(rect.left + rect.width * 0.5);
       }
-
       const leftImg = wrap.querySelector(':scope > img');
-      if (leftImg.complete) {
-        setTimeout(setDefault, 100);
-      } else {
-        leftImg.addEventListener('load', setDefault);
-      }
-
+      if (leftImg.complete) { setTimeout(setDefault, 100); }
+      else { leftImg.addEventListener('load', setDefault); }
       window.addEventListener('resize', setDefault);
     }
 
@@ -1326,7 +980,6 @@
       initSlider('s3', 's3r', 's3h', 's3ri');
     });
   </script>
-
 </body>
 
 </html>
