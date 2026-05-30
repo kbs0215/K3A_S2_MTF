@@ -25,3 +25,8 @@ build/
 # OS
 Thumbs.db
 .DS_Store
+
+# Large Files & Heavy Outputs
+*.pth
+module5_SR_comparison/output/
+
