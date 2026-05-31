@@ -354,19 +354,31 @@ def generate_images(
         sr_rgb, _ = tif_to_rgb(sr_data)
         hr_rgb, _ = tif_to_rgb(hr_data)
 
-        # Save slider images (s1 compares Bicubic vs SR, s2 and s3 compare blocky LR 10m vs SR)
+        # Save slider images (용량 및 페이지 로딩 성능 최적화를 위해 512x512 크기로 다운샘플링)
+        from PIL import Image
+        
+        def resize_rgb(arr: np.ndarray, size: int) -> np.ndarray:
+            return np.array(Image.fromarray(arr).resize((size, size), Image.Resampling.LANCZOS))
+            
+        bicubic_rgb_resized = resize_rgb(bicubic_rgb, 512)
+        nearest_rgb_resized = resize_rgb(nearest_rgb, 512)
+        sr_rgb_resized = resize_rgb(sr_rgb, 512)
+        hr_rgb_resized = resize_rgb(hr_rgb, 512)
+        
         if slider_id == "s1":
-            save_png_raw(output_dir / f"{slider_id}-original.png", bicubic_rgb)
+            save_png_raw(output_dir / f"{slider_id}-original.png", bicubic_rgb_resized)
         else:
-            save_png_raw(output_dir / f"{slider_id}-original.png", nearest_rgb)
-        save_png_raw(output_dir / f"{slider_id}-superx.png", sr_rgb)
+            save_png_raw(output_dir / f"{slider_id}-original.png", nearest_rgb_resized)
+        save_png_raw(output_dir / f"{slider_id}-superx.png", sr_rgb_resized)
 
-        # First chip → hero image
+        # First chip → hero image (가로 800px로 다운샘플링 및 최적 압축)
         if idx == 0:
-            save_jpg_raw(output_dir / "hero.jpg", hr_rgb, quality=90)
+            hero_h = int(hr_rgb.shape[0] * (800 / hr_rgb.shape[1]))
+            hero_rgb_resized = np.array(Image.fromarray(hr_rgb).resize((800, hero_h), Image.Resampling.LANCZOS))
+            save_jpg_raw(output_dir / "hero.jpg", hero_rgb_resized, quality=85)
 
         # Save HR reference (for inspection)
-        save_png_raw(output_dir / f"{slider_id}-hr-ref.png", hr_rgb)
+        save_png_raw(output_dir / f"{slider_id}-hr-ref.png", hr_rgb_resized)
 
     print(f"\n{'=' * 60}")
     print(f"  완료! 이미지 -> {output_dir}")

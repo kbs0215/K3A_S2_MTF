@@ -195,18 +195,30 @@ def main():
         print("  Applying post-processing degrid filter to SR image...")
         sr_rgb_degridded = degrid_tile_artifacts(sr_rgb)
         
-        # 슬라이더별 대조 PNG 쌍 저장
-        if slider_id == "s1":
-            save_png_raw(images_dir / f"{slider_id}-original.png", bicubic_rgb)
-        else:
-            save_png_raw(images_dir / f"{slider_id}-original.png", nearest_rgb)
-            
-        save_png_raw(images_dir / f"{slider_id}-superx.png", sr_rgb_degridded)
-        save_png_raw(images_dir / f"{slider_id}-hr-ref.png", hr_rgb)
+        # 슬라이더별 대조 PNG 쌍 저장 (용량 및 페이지 로딩 성능 최적화를 위해 512x512 크기로 다운샘플링)
+        from PIL import Image
         
-        # 첫 번째 칩은 인트로 hero 이미지로도 저장
+        def resize_rgb(arr: np.ndarray, size: int) -> np.ndarray:
+            return np.array(Image.fromarray(arr).resize((size, size), Image.Resampling.LANCZOS))
+            
+        bicubic_rgb_resized = resize_rgb(bicubic_rgb, 512)
+        nearest_rgb_resized = resize_rgb(nearest_rgb, 512)
+        sr_rgb_degridded_resized = resize_rgb(sr_rgb_degridded, 512)
+        hr_rgb_resized = resize_rgb(hr_rgb, 512)
+        
+        if slider_id == "s1":
+            save_png_raw(images_dir / f"{slider_id}-original.png", bicubic_rgb_resized)
+        else:
+            save_png_raw(images_dir / f"{slider_id}-original.png", nearest_rgb_resized)
+            
+        save_png_raw(images_dir / f"{slider_id}-superx.png", sr_rgb_degridded_resized)
+        save_png_raw(images_dir / f"{slider_id}-hr-ref.png", hr_rgb_resized)
+        
+        # 첫 번째 칩은 인트로 hero 이미지로도 저장 (가로 800px로 다운샘플링 및 최적 압축)
         if slider_idx == 0:
-            save_jpg_raw(images_dir / "hero.jpg", hr_rgb, quality=90)
+            hero_h = int(hr_rgb.shape[0] * (800 / hr_rgb.shape[1]))
+            hero_rgb_resized = np.array(Image.fromarray(hr_rgb).resize((800, hero_h), Image.Resampling.LANCZOS))
+            save_jpg_raw(images_dir / "hero.jpg", hero_rgb_resized, quality=85)
             
     print(f"\n[success] Successfully rendered all sliders using user-provided SR output TIFs with de-grid filtering!")
     print(f"All images saved to {images_dir}")
